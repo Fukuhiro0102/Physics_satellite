@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html>
+<style>
+	header {
+		background-color: #ccc;
+		/* 背景色指定 */
+	}
+
+	footer {
+		background-color: #ccc;
+		/* 背景色指定 */
+	}
+
+	main {
+		background-color: #eee;
+		/* 背景色指定 */
+		padding: 10px;
+		/* 余白指定 */
+		overflow: hidden;
+		/* floatで高さがなくなる問題解消 */
+	}
+
+	.main_visual {
+		background-color: #ccc;
+		/* 背景色指定 */
+		text-align: center;
+		/* 文字中央揃え */
+		padding: 30px;
+		/* 余白指定 */
+	}
+
+	.side {
+		background-color: #bbb;
+		/* 背景色指定 */
+		width: 25%;
+		/* 幅指定 */
+		float: left;
+		/* 要素を並べる */
+		height: 1600px;
+		/* 高さ指定 */
+	}
+
+	.main_content {
+		background-color: #aaa;
+		/* 背景色指定 */
+		width: 75%;
+		/* 幅指定 */
+		float: left;
+		/* 要素を並べる */
+		height: 1600px;
+		/* 高さ指定 */
+	}
+</style>
+
+<head>
+	<meta charset="utf-8" />
+
+	<style>
+		#canvas {
+			background-color: rgb(194, 214, 243);
+		}
+	</style>
+
+	</style>
+	<script>
+
+		var r;
+
+		var line1;
+		var line2;
+		var line3;
+		var text1;
+
+		var kakudo;
+		var roket;
+
+		var Loop_flag = true;
+
+		var X;
+		var Y;
+		var x0;
+		var y0;
+		var vx;
+		var vy;
+		var ax;
+		var ay;
+		var v0;
+		var v0x;
+		var v0y;
+		var a;//発射角度
+		var dt;//刻み時間
+		var t = 0;
+		var Xpx;
+		var Ypx;
+
+		//G:万有引力定数
+		var G = 6.67259 * Math.pow(10, -11);
+		//惑星の質量kg
+		var M ;
+		//惑星の中心と人工衛星をの距離
+		var R;
+		//惑星の半径
+		var r0;
+		//・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・
+		function set() {
+			canvas_reset();
+
+			const planet = document.form1.planet;
+
+			const num = planet.selectedIndex;
+
+			const str = planet.options[num].value;
+
+			//  document.getElementById("span1").textContent = str;
+
+			//星の描画
+			var canvas = document.getElementById("canvas");
+			ctx = canvas.getContext('2d');
+
+			if (str == "earth") {
+				r = 66.8;//px半径
+				M= 5.9742 * Math.pow(10, 24);
+				ctx.fillStyle = "rgb(69,72,250)";
+				document.getElementById("span0").textContent = "地球：地球の半径(6.37*10^6m)";
+				document.getElementById("span00").textContent = "地球の質量(5.9742*10^24kg)";
+				r0 = 6.37 * Math.pow(10, 6);
+
+			}
+			if (str == "mars") {
+				r = 66.8 * 0.53;
+				M= 6.4191 * Math.pow(10, 23);
+				ctx.fillStyle = "rgb(248,132,97)";
+				document.getElementById("span0").textContent = "火星：地球の半径(6.37*10^24m)×" + 0.53;
+				document.getElementById("span00").textContent = "火星の質量(6.4191*10^23kg)";
+				r0 = 6.37 * Math.pow(10, 6) * 0.53;
+			}
+
+			if (str == "venus") {
+				r = 66.8 * 0.95;
+				M= 4.869 * Math.pow(10, 24);
+				ctx.fillStyle = "rgb(232,247,97)";
+				document.getElementById("span0").textContent = "金星：地球の半径(6.37*10^24m)×" + 0.95;
+				document.getElementById("span00").textContent = "金星の質量(4.869*10^24kg)";
+				r0 = 6.37 * Math.pow(10, 6) * 0.95;
+			}
+			if (str == "mercury") {
+				r = 66.8 * 0.38;//mercury
+				M= 3.285 * Math.pow(10, 23);
+				ctx.fillStyle = "rgb(9,198,247)";
+				document.getElementById("span0").textContent = "水星：地球の半径(6.37*10^24m)×" + 0.38;
+				document.getElementById("span00").textContent = "水星の質量(3.285*10^23kg)";
+				r0 = 6.37 * Math.pow(10, 6) * 0.38;
+			}
+			ctx.beginPath();
+			ctx.arc(500, 700, r, 0, Math.PI * 2, true);
+
+			ctx.fill();
+
+			//  document.getElementById("span2").textContent = r;
+		}
+		//・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・
+		function kaku_change() {
+			
+			var canvas = document.getElementById("canvas");
+			var ctx = canvas.getContext('2d');
+			ctx.fillStyle = "rgb(167, 198, 248)";
+			ctx.beginPath();
+			ctx.moveTo(500, 700 - r);
+			ctx.arc(500, 700 - r, 100, -1.57079, 0, false);
+			ctx.fill();
+			document.getElementById("span1").textContent = null;
+			//角度表記消す
+		}
+		//・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・
+		function a_calc() {
+			a = document.getElementById("kakudo1").value;
+			kakudo = a * Math.PI / 180;
+			//発射角度読み込み
+		}
+		//・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・
+		function kaku_al() {
+			document.getElementById("span1").textContent = "発射角度が変わりました";
+			document.getElementById("val_kakudo").textContent = a;
+		}
+		//・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・
+		function kakudo_asist() {
+
+			set();
+			a_calc();
+			kaku_al();
+
+			//角度アシストの線
+
+			line3 = canvas.getContext('2d');
+
+			line3.fillStyle = "rgb(97,247,160)";
+			line3.beginPath();
+			line3.moveTo(500, 700 - r);
+			line3.arc(500, 700 - r, 50, -kakudo, 0, false);
+
+			ctx.fill();
+			//縦
+			line1 = canvas.getContext('2d');
+
+			line1.beginPath();
+			line1.lineWidth = 1;
+			line1.moveTo(500, 700 - r);
+			line1.lineTo(600, 700 - r);
+			line1.closePath();
+			line1.stroke();
+			//横
+			line2 = canvas.getContext('2d');
+
+			line2.beginPath();
+			line2.lineWidth = 1;
+			line2.moveTo(500, 700 - r);
+			line2.lineTo(500, 600 - r);
+			line2.closePath();
+			line2.stroke();
+			//角度表示
+			text1 = canvas.getContext('2d');
+
+			text1.font = "20px serif"
+			text1.strokeText(a + "度", 550, 600);
+		}
+
+		//・・・・・・・・・・・・・・・・・・・・・・・・・・・・・
+		function v_alerm() {
+			var v_alerm = document.getElementById("speed1").value;
+			document.getElementById("val_speed").textContent = v_alerm;
+			document.getElementById("span4").textContent = "初速度が変わりました";
+		}
+		//・・・・・・・・・・・・・・・・・・・・・・・・・・・・・
+		function dt_alerm() {
+			document.getElementById("span5").textContent = "刻み時間が変わりました";
+		}
+		//・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・
+		function launch1_set() {
+			x0 = 0;//以下計算上の値、ｊｓ上ではない,
+			y0 = r0;
+
+			X = x0;//x0
+			Y = y0;//y0
+
+			/*ax = -G * M * X / Math.pow(r0, 3);//加速度m/s^2,ax0
+			ay = -G * M * Y / Math.pow(r0, 3);*///時間系ay0
+
+			ax = 0;
+			ay = 0;
+
+			const str1 = document.getElementById("speed0").value;
+			if (str1 == "null") {
+				document.getElementById("span2").textContent = "初速度を入力してください";
+			}
+			if (str1 == "1") {
+				v0 = 5 * 1000;
+			}
+			if (str1 == "2") {
+				v0 = 10 * 1000;
+			}
+			if (str1 == "3") {
+				v0 == 100 * 1000;
+			}
+			if (str1 == "own") {
+				v0 = document.getElementById("speed1").value * 1000;//初速度m/s
+			}
+
+			const str2 = document.getElementById("DT").value;
+			if (str2 == "null") {
+				document.getElementById("span3").textContent = "刻み時間を入力してください！";
+			}
+			if (str2 == "1") {
+				dt = 1;
+			}
+			if (str2 == "2") {
+				dt = 2;
+			}
+			if (str2 == "3") {
+				dt = 3;
+			}
+			if (str2 == "4") {
+				dt = 4;
+			}
+			if (str2 == "5") {
+				dt = 5;
+			}
+
+			v0x = v0 * Math.cos(kakudo);
+			v0y = v0 * Math.sin(kakudo);
+
+			vx = v0x;
+			vy = v0y;
+		}
+		//・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・
+		function X_change(m) {//座標変換,165px=5cm(3340px=1m)レート,実際の地球半径：この地球半径＝6.37*10^6m：0.02m,mにはXが入る
+			var L = 3340 * 0.02 / (6.37 * Math.pow(10, 6));
+			var M = m * L + 500;
+			return M;
+		}
+		//・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・
+		function Y_change(n) {//座標変換関数
+			var N = 3340 * 0.02 / (6.37 * Math.pow(10, 6));
+			var O = -n * N + 697;
+			//document.getElementById("span8").textContent = "|Ypx|は" + n*N + "mです。";
+			return O;
+		}
+		//・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・
+		function launch2_set() {
+			Xpx = X_change(X);//座標変換
+			Ypx = Y_change(Y);
+
+			launch4_set();//描画処理
+
+			/*document.getElementById("span1").textContent = "X方向のpx座標は" + Xpx + "pxです。";
+			document.getElementById("span2").textContent = "Y方向のpx座標は" + Ypx + "pxです。";
+
+			document.getElementById("span6").textContent = "X方向の速さは" + vx + "m/sです。";//速さ表示
+			document.getElementById("span7").textContent = "Y方向の速さは" + vy + "m/sです。";
+
+			document.getElementById("span8").textContent = "X方向の加速度は" + ax + "m/s^2です。";
+			document.getElementById("span9").textContent = "Y方向の加速度は" + ay + "m/s^2です。";
+
+			document.getElementById("span10").textContent = "X方向のm座標は" + X + "mです。";
+			document.getElementById("span11").textContent = "Y方向のm座標は" + Y + "mです。";
+			document.getElementById("span12").textContent = "距離は" + R + "mです。";*/
+			//console.log("ok");
+		}
+		//・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・
+		var launch_3set = function () {
+
+			X = X + vx * dt;//(一回目はx1=x0+vx0*dt,,,,)
+			Y = Y + vy * dt;
+
+			launch2_set();//px座標に変換,描画処理,速さ、加速度表示
+
+			R = Math.pow(Math.pow(X, 2) + Math.pow(Y, 2), 0.5);//時間系、R1,,,
+
+			ax = -G * M * X / Math.pow(R, 3);//加速度m/s^2,ax1,,,
+			ay = -G * M * Y / Math.pow(R, 3);//時間系ay2
+
+			vx = vx + ax * dt;//時間系、vx1,,,
+			vy = vy + ay * dt;//vy1,,,
+
+			//console.log("ok");
+
+			var id = setTimeout(launch_3set, 10);
+			if (Loop_flag == false) {
+				clearTimeout(id);　//idをclearTimeoutで指定している
+			}
+			if (R < r0 - 0.01 * Math.pow(10, 6)) {
+				alert("墜落しました。");
+				clearTimeout(id);　//idをclearTimeoutで指定している
+			}
+
+		}
+		//・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・
+		function launch4_set() {
+			var roket;
+
+			var canvas = document.getElementById("canvas");
+			roket = canvas.getContext('2d');
+
+			roket.fillStyle = "rgb(218,118,243)";
+
+			roket.beginPath();
+			roket.arc(Xpx, Ypx, 2, 0, Math.PI * 2, true);
+
+			roket.fill();
+			//roket.fillRect(500+Xpx, 680-Ypx, 20, 20);
+		}
+		//・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・
+		function launch1() {
+			launch1_set();
+			Loop_flag = true;
+			launch_3set();//実行
+		}
+		//・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・
+		function stop_Loop() {
+			Loop_flag = false;
+		}
+		//・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・
+		function canvas_reset() {
+			var canvas = document.getElementById("canvas");
+			ctx = canvas.getContext('2d');
+			ctx.fillStyle = "rgb(167, 198, 248)";
+			ctx.fillRect(0, 0, canvas.width, canvas.height);
+		}
+		//・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・・
+
+	</script>
+</head>
+
+<body>
+	<title>惑星と人工衛星</title>
+	<header>
+		<h1>高校物理シミュレーション・人工衛星</h1>
+	</header>
+	<main>
+		<section class="main_visual">
+			<div align="left">
+				<h1>導入</h1>
+				<b>このソフトは惑星から人工衛星を打ち上げたときの軌道を可視化するものです。</b>
+				<h1>操作方法</h1>
+				<b>①</b>惑星を選択します。<br>
+				<b>②</b>発射角度、速度、<b>刻み時間</b>を決めます。<br>
+				<b>③</b>打ち上げボタンをぽちっ。<br>
+				<b>★</b>初期化は<b>「全ての項目をリセット」</b>を押してください。<br>
+				<b>＊</b>実際の地球の半径(m)：縮小した地球の半径(m)＝6.37*10^6：0.02(解像度1920 × 1080の、モニターサイズを26インチと想定しています。(167px=5cm))<br>
+				<b>＊</b><b>刻み時間</b>とは..<br>
+				値が小さければ小さいほど正確な数値を導きますが処理が重たくなります。<br>軌道計算はオイラー法を採用しております。<br>
+				<br>
+				<b>注）</b><u>描画ペースは約０．０１秒</u>です。
+			</div>
+
+			</p>
+
+		</section>
+		<section class="side">
+			<h1>・ 各種設定</h1>
+
+			　 <h1>惑星選択</h1>
+			<form name="form1">　
+				　　　星名：<select name="planet" onchange="set()">
+					<option>選択してください</option>
+					<option value="earth">地球</option>
+					<option value="mars">火星</option>
+					<option value="venus">金星</option>
+					<option value="mercury">水星</option>
+				</select>
+				<button onclick="canvas_reset()">全ての項目をリセット</button>
+			</form>
+
+			<p>・・・・・・・・・・・・・・・・・・・・・・・・・</p>
+
+			<h1>発射角度_スライドバー</h1>
+			<form name="vall_kaku">
+				角度：<input id="kakudo1" type="range" min="0" max="90" onchange="kakudo_asist()"
+					oninput="document.getElementById('val_kakudo').value=this.value">
+			</form>
+			<output id="val_kakudo">-</output>度
+			<button onclick="kaku_change()">リセット</button>
+
+			<p>・・・・・・・・・・・・・・・・・・・・・・・・・</p>
+
+			<h1>初速度_入力ボックス</h1>
+			<form name="=form2">
+				速度：<select id="speed0" onchange="v_alerm()">
+					<option value="null">選択してください</option>
+					<option value="1">5km/s</option>
+					<option value="2">10km/s</option>
+					<option value="3">100km/s</option>
+					<option value="own">任意入力</option>
+				</select></form><br>
+			<p>任意入力(上で「任意入力」を選択)</p><input id="speed1" onchange="v_alerm()">
+			<output id="val_speed">-</output>km/s
+			<p>目安(地球では発射角度が0のとき、0~約7.9km/sで墜落、約7.9~約11.2km/sで周回、約11.2km/s~で地球の重力を振り切ります。刻み時間によって誤差が生じます。</p>
+
+			<p>・・・・・・・・・・・・・・・・・・・・・・・・・</p>
+
+			<h1>刻み時間＿入力ボックス</h1>
+			<form name="form3">
+				<select id="DT" onchange="dt_alerm()">
+					<option value="null">選択してください</option>
+					<option value="1">1秒</option>
+					<option value="2">2秒</option>
+					<option value="3">3秒</option>
+					<option value="4">4秒</option>
+					<option value="5">5秒</option>
+				</select></form><br>
+			<p>推奨３秒。数値が小さいほど正確ですが、処理が重くなります。</p>
+
+			<p>・・・・・・・・・・・・・・・・・・・・・・・・・</p>
+
+
+
+			<h1>打ち上げ/再開</h1>
+			<button onclick="launch1()">Go!</button><br>
+
+			<h1>一時停止</h1>
+			<button onclick="stop_Loop()">Stop!</button>
+
+			<p>・・・・・・・・・・・・・・・・・・・・・・・・・</p>
+			<h1>・お知らせ</h1>
+			<strong id="span0"></strong><br>
+			<strong id="span00"></strong><br>
+			<strong id="span1"></strong><br>
+			<strong id="span2"></strong><br>
+			<strong id="span3"></strong><br>
+			<strong id="span4"></strong><br>
+			<strong id="span5"></strong><br>
+
+		</section>
+
+		<section class="main_content">
+
+			<canvas id="canvas" width="1100px" height="1490px"></canvas>
+		</section>
+	</main>
+	<footer>
+		<strong>引用、参考</strong><br>
+		<a href="http://www.enjoy.ne.jp/~k-ichikawa/Satellite2.html">人工衛星の軌道に関する運動方程式</a>
+		<br>
+		<a href="https://techacademy.jp/magazine/5541">JavaScriptでsetTimeoutを使う方法【初心者向け】</a>
+		<br>
+		<a href="https://haniwaman.com/pixcel-to-centimeter/#i-5">ピクセルは何センチ？Webサイトの幅（ピクセル）からセンチ（cm）を求める計算方法</a>
+		<br>
+		
+	</footer>
+
+</body>
+
+</html>
